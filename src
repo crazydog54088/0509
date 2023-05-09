@@ -1,0 +1,60 @@
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+import bs4, time
+
+def click_text(obj):
+#尋找「查看所有評論」的字串並點擊
+    try:
+        obj.find_element_by_xpath("//span[contains(text(),'查看所有評論')]").click()
+    except:
+        pass
+
+def click_yes(obj):
+    try:
+        obj.find_element_by_xpath("//body/div[4]/div[2]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]/div[2]/footer[1]/div[2]/div[1]/div[1]/div[2]/span[2]").click()
+    except:
+        pass
+
+page = int(input("請輸入頁面向下捲動次數:"))
+dirverPath = 'C:\\Users\\Terence\\anaconda3\\chromedriver.exe'
+browser = webdriver.Chrome(executable_path = dirverPath)
+url = 'https://play.google.com/store/apps/details?id=com.facebook.katana&hl=zh_TW&gl=US'
+browser.get(url)
+number = 0
+counter = 0
+post_title = []
+move = browser.find_element_by_tag_name('body')
+click_text(move)
+time.sleep(1)
+click_yes(move)
+time.sleep(1)
+data = []
+while page > counter:
+    move.send_keys(Keys.PAGE_DOWN)
+    objsoup = bs4.BeautifulSoup(browser.page_source)
+    articles = objsoup.find_all('div', class_ = 'RHo1pe')
+    for article in articles:
+        title = article.find('div', class_ = 'X5PpBb')
+        rank = article.find('div', role = 'img')
+        content= article.find('div', class_ = 'h3YV2d')
+        timestamp=article.find('span',class_ = 'bp9Aid')
+        asd= article.find('div', class_ = 'AJTPZc')
+        if title.text not in post_title:
+            number += 1
+            post_title.append(title.text)
+            print("編號:", number)
+            print("暱稱:", title.text)
+            print("評價:", rank.get('aria-label'))
+            print("評論:", content.text)
+            print("時間:", timestamp.text)
+            print("幫助:", asd)
+            print("="*100)
+            data += [(number, title.text, rank.get('aria-label'), content.text, timestamp.text,asd)]
+
+    counter += 1
+
+browser.quit()
+df = pd.DataFrame(data, columns=['編號', '暱稱', '評價', '評論', '時間', '幫助'])
+file_name = f"{url.split('id=')[1].replace('.', '_')}"
+df.to_excel(r'C:\Users\Terence\OneDrive\桌面\0301.xlsx', index=0)
